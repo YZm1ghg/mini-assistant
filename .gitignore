@@ -1,0 +1,81 @@
+# ============================================================
+#  忽略运行时数据 —— 这些**绝对不能**提交到 Git
+# ============================================================
+#
+# ⚠⚠ 为什么这一条最重要：
+#   data/ 里存的是**你自己的东西**：
+#     chat.jsonl      你所有的对话记录
+#     memory.jsonl    长期记忆
+#     memory_vec.npy  记忆向量
+#     rec.wav         你最近一次录音
+#     look/           你看过的截图和照片
+#     vault/          加密保险箱（含密钥和密文）
+#     wechat_seen.json 微信已读记录
+#
+#   一旦 git add . 提交上去，这些东西就进了仓库历史，
+#   即使之后删掉也还能翻出来（除非重写历史）。
+
+data/
+config.json
+
+# 保险箱（含密钥，泄露 = 所有密文作废）
+*.dvn
+*.key
+.hold.json
+
+# 录音 / 截图 / 看过的图
+*.wav
+*.mp3
+*.m4a
+*.jpg
+*.jpeg
+*.png
+*.webp
+*.bmp
+
+# 日志
+*.log
+logs/
+
+# 模型（体积大，不该进仓库）
+models/
+*.pt
+*.bin
+*.gguf
+*.onnx
+*.safetensors
+
+# 向量数据
+*.npy
+*.npz
+
+# 聊天数据库
+*.db
+*.sqlite
+*.sqlite3
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.venv/
+venv/
+env/
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 临时
+*.tmp
+*.temp
+~$*

@@ -1,0 +1,416 @@
+/* ============================================================
+   迷你助手 · 手机/平板/手表 共用样式
+
+   配色跟桌面版一致：
+       深灰底 + 极简白字 + 单一强调色
+   没有任何渐变、发光、装饰
+   ============================================================ */
+
+:root {
+  --bg:      #1a1a1a;
+  --bg-2:    #212121;
+  --bg-3:    #2a2a2a;
+  --line:    #333;
+  --fg:      #e8e8e8;
+  --fg-dim:  #8b8b8b;
+  --fg-mute: #666;
+  --accent:  #4d6bfe;
+  --danger:  #d9534f;
+  --radius:  10px;
+
+  /* 安全区（刘海屏/圆角屏）*/
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  height: 100%;
+  overscroll-behavior: none;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font: 15px/1.6 -apple-system, "PingFang SC", "Microsoft YaHei",
+        system-ui, sans-serif;
+  display: flex;
+  flex-direction: column;
+  /* 防止 iOS 输入框弹起时页面被顶飞 */
+  position: fixed;
+  inset: 0;
+}
+
+.hidden { display: none !important; }
+
+/* ---------- 顶部 ---------- */
+header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: calc(var(--safe-t) + 10px) 12px 10px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg);
+}
+header #title {
+  flex: 1;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: .3px;
+}
+
+/* ---------- 消息区 ---------- */
+main {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 16px 0;
+}
+.wrap {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 14px;
+}
+
+.msg { margin-bottom: 18px; }
+
+.who {
+  font-size: 11px;
+  color: var(--fg-mute);
+  letter-spacing: .6px;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+.msg.me .who { color: var(--accent); }
+
+.body {
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.65;
+}
+.msg.me .body {
+  background: var(--bg-3);
+  border-radius: var(--radius);
+  padding: 10px 13px;
+}
+
+.meta {
+  font-size: 11px;
+  color: var(--fg-mute);
+  margin-top: 6px;
+}
+.meta .fast {
+  color: var(--accent);
+  margin-left: 6px;
+}
+
+.body code {
+  background: var(--bg-3);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 13.5px;
+}
+.body pre {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 11px;
+  overflow-x: auto;
+  margin: 8px 0;
+  font-size: 13px;
+}
+.body pre code { background: none; padding: 0; }
+
+/* 空状态 */
+.empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--fg-mute);
+}
+.empty .logo {
+  width: 62px; height: 62px;
+  margin: 0 auto 18px;
+  border-radius: 50%;
+  background: var(--bg-3);
+  color: var(--accent);
+  font-size: 26px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.empty p { font-size: 14px; }
+
+/* 思考中 */
+.think {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--fg-mute);
+  font-size: 14px;
+}
+.spin {
+  width: 14px; height: 14px;
+  border: 2px solid var(--line);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: sp .8s linear infinite;
+}
+@keyframes sp { to { transform: rotate(360deg); } }
+
+/* ---------- 底部输入 ---------- */
+footer {
+  flex: 0 0 auto;
+  border-top: 1px solid var(--line);
+  background: var(--bg);
+  padding: 10px 12px calc(var(--safe-b) + 10px);
+}
+.input-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  max-width: 720px;
+  margin: 0 auto;
+}
+textarea {
+  flex: 1;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--fg);
+  font: inherit;
+  font-size: 15px;
+  padding: 9px 12px;
+  resize: none;
+  outline: none;
+  max-height: 120px;
+  min-height: 42px;
+}
+textarea:focus { border-color: #444; }
+textarea::placeholder { color: var(--fg-mute); }
+
+.status {
+  max-width: 720px;
+  margin: 6px auto 0;
+  font-size: 11.5px;
+  color: var(--fg-mute);
+  min-height: 15px;
+  text-align: center;
+}
+
+/* ---------- 按钮 ---------- */
+button {
+  font: inherit;
+  font-size: 14px;
+  background: var(--bg-3);
+  color: var(--fg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 9px 14px;
+  cursor: pointer;
+}
+button:active { background: #333; }
+button.ghost { background: none; }
+button.pri {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+button.icon {
+  padding: 9px;
+  background: none;
+  border: none;
+  color: var(--fg-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+button.icon:active { background: var(--bg-3); }
+
+/* 麦克风三种状态 */
+.mic { color: var(--fg-dim); }
+.mic.rec { color: var(--danger); animation: pulse 1s infinite; }
+.mic.busy { color: var(--accent); }
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: .35; }
+}
+.send { color: var(--accent); }
+
+/* ---------- 遮罩层 ---------- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 50;
+  display: none;
+  flex-direction: column;
+  overflow-y: auto;
+}
+.overlay.show { display: flex; }
+
+/* ---------- 首次配置 ---------- */
+.setup-box {
+  max-width: 420px;
+  width: 100%;
+  margin: auto;
+  padding: 30px 22px calc(var(--safe-b) + 30px);
+}
+.setup-box h1 {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+  text-align: center;
+}
+.setup-box .muted {
+  color: var(--fg-mute);
+  font-size: 13.5px;
+  text-align: center;
+  margin-bottom: 26px;
+}
+.setup-box label {
+  display: block;
+  font-size: 12px;
+  color: var(--fg-dim);
+  margin-bottom: 7px;
+}
+.setup-box input {
+  width: 100%;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--fg);
+  font: inherit;
+  font-size: 16px;      /* ⚠ 16px 以上 iOS 才不会自动放大 */
+  padding: 11px 13px;
+  outline: none;
+}
+.setup-box input:focus { border-color: var(--accent); }
+.hint {
+  font-size: 12px;
+  color: var(--fg-mute);
+  line-height: 1.8;
+  margin: 14px 0 22px;
+}
+.hint code {
+  background: var(--bg-3);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+.setup-box .row {
+  display: flex;
+  gap: 10px;
+}
+.setup-box .row button { flex: 1; padding: 12px; }
+.err {
+  color: var(--danger);
+  font-size: 12.5px;
+  margin-top: 14px;
+  min-height: 18px;
+  text-align: center;
+}
+
+/* ---------- 侧栏菜单 ---------- */
+.menu-box { width: 100%; height: 100%; display: flex;
+            flex-direction: column; }
+.menu-head {
+  display: flex;
+  align-items: center;
+  padding: calc(var(--safe-t) + 14px) 16px 14px;
+  border-bottom: 1px solid var(--line);
+  font-size: 16px;
+  font-weight: 600;
+}
+.menu-head span { flex: 1; }
+.menu-body { flex: 1; overflow-y: auto; padding: 8px 0 30px; }
+
+.sec {
+  font-size: 11px;
+  color: var(--fg-mute);
+  letter-spacing: .8px;
+  text-transform: uppercase;
+  padding: 18px 18px 8px;
+}
+.item {
+  display: flex;
+  align-items: center;
+  padding: 14px 18px;
+  font-size: 14.5px;
+  color: var(--fg-dim);
+  border-bottom: 1px solid rgba(255,255,255,.03);
+}
+.item.tap:active { background: var(--bg-2); }
+.item span { flex: 1; }
+.item b { color: var(--fg); font-weight: 500; }
+.item .small { font-size: 12px; color: var(--fg-mute); }
+.muted { color: var(--fg-mute); }
+.small { font-size: 12.5px; }
+
+/* ---------- toast ---------- */
+#toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--safe-b) + 80px);
+  transform: translateX(-50%);
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  color: var(--fg);
+  padding: 10px 18px;
+  border-radius: var(--radius);
+  font-size: 13.5px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s;
+  z-index: 99;
+  max-width: 80vw;
+  text-align: center;
+}
+#toast.show { opacity: 1; }
+
+/* ============================================================
+   平板：宽屏时左右分栏
+   ============================================================ */
+@media (min-width: 700px) {
+  .wrap { max-width: 820px; }
+  body { font-size: 15.5px; }
+  .item { padding: 16px 22px; }
+  .sec { padding: 20px 22px 8px; }
+}
+
+/* ============================================================
+   手表：屏幕小，全部缩小
+   ⚠ 手表一般 300~450px 宽，圆形表盘的可视区更小
+   ============================================================ */
+@media (max-width: 420px) {
+  body { font-size: 13.5px; }
+  header {
+    padding: calc(var(--safe-t) + 6px) 8px 6px;
+  }
+  header #title { font-size: 13px; }
+  main { padding: 10px 0; }
+  .wrap { padding: 0 10px; }
+  .msg { margin-bottom: 12px; }
+  .who { font-size: 10px; }
+  .msg.me .body { padding: 8px 11px; }
+  textarea { font-size: 14px; min-height: 38px; padding: 8px 10px; }
+  button { padding: 8px 11px; font-size: 13px; }
+  .item { padding: 11px 14px; font-size: 13.5px; }
+  .sec { padding: 14px 14px 6px; font-size: 10px; }
+  .empty { padding: 36px 14px; }
+  .empty .logo { width: 48px; height: 48px; font-size: 20px;
+                 margin-bottom: 12px; }
+  .setup-box { padding: 20px 16px calc(var(--safe-b) + 20px); }
+  .setup-box h1 { font-size: 20px; }
+  .hint { font-size: 11px; }
+}

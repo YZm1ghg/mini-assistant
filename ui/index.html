@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>迷你助手</title>
+<!--
+  极简界面
+
+  设计原则：
+    · 借用 DeepSeek Harness 自己的克制风格
+    · 深灰底 + 极简白字 + 单一强调色（不用渐变/发光/装饰）
+    · 没有任何图片、没有动画、没有二次元元素
+    · 一个文件，不依赖任何外部资源（离线可用）
+-->
+<style>
+  :root {
+    color-scheme: dark;
+    --bg:      #1a1a1a;
+    --bg-2:    #212121;
+    --bg-3:    #2a2a2a;
+    --line:    #333;
+    --fg:      #e8e8e8;
+    --fg-dim:  #8b8b8b;
+    --fg-mute: #666;
+    --accent:  #4d6bfe;
+    --accent-d:#3d56d6;
+    --danger:  #d9534f;
+    --radius:  6px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { height:100%; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font: 14px/1.6 -apple-system, "Segoe UI", "Microsoft YaHei",
+          system-ui, sans-serif;
+    display: flex;
+    overflow: hidden;
+  }
+
+  /* ---------- 侧栏 ---------- */
+  aside {
+    width: 230px;
+    flex: 0 0 230px;
+    background: var(--bg-2);
+    border-right: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+  }
+  aside.hide { display: none; }
+
+  .brand {
+    padding: 16px 16px 12px;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: .3px;
+  }
+  .brand span { color: var(--fg-mute); font-weight: 400;
+                font-size: 12px; margin-left: 6px; }
+
+  .side-actions { padding: 0 12px 12px; display: flex; gap: 6px; }
+
+  .side-body { flex: 1; overflow-y: auto; padding: 0 12px 12px; }
+
+  .side-title {
+    font-size: 11px;
+    color: var(--fg-mute);
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    padding: 12px 4px 6px;
+  }
+
+  .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 8px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    color: var(--fg-dim);
+  }
+  .row b { color: var(--fg); font-weight: 500; }
+  .row .v { color: var(--fg); font-size: 12px; }
+  .dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--fg-mute);
+    margin-right: 7px;
+    vertical-align: 1px;
+  }
+  .dot.on  { background: #4caf50; }
+  .dot.off { background: #666; }
+  .dot.bad { background: var(--danger); }
+
+  /* ---------- 主区 ---------- */
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  header {
+    height: 46px;
+    flex: 0 0 46px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 14px;
+  }
+  .title { font-size: 13px; color: var(--fg-dim); }
+  .spacer { flex: 1; }
+
+  /* ---------- 消息 ---------- */
+  #list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 22px 0;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 0 20px; }
+
+  .msg { margin-bottom: 22px; }
+  .who {
+    font-size: 11px;
+    color: var(--fg-mute);
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    margin-bottom: 7px;
+  }
+  .msg.me .who { color: var(--accent); }
+  .body {
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--fg);
+  }
+  .msg.me .body {
+    background: var(--bg-3);
+    border-radius: var(--radius);
+    padding: 10px 13px;
+    color: #ddd;
+  }
+  .meta {
+    font-size: 11px;
+    color: var(--fg-mute);
+    margin-top: 7px;
+  }
+  .body code {
+    background: var(--bg-3);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 13px;
+  }
+  .body pre {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 12px;
+    overflow-x: auto;
+    margin: 8px 0;
+  }
+  .body pre code { background: none; padding: 0; }
+
+  .empty {
+    color: var(--fg-mute);
+    text-align: center;
+    padding: 70px 20px;
+    font-size: 13px;
+    line-height: 2;
+  }
+  .empty b { color: var(--fg-dim); font-weight: 500; }
+
+  /* 思考中 */
+  .think { display: flex; align-items: center; gap: 9px;
+           color: var(--fg-mute); font-size: 13px; }
+  .spin {
+    width: 13px; height: 13px;
+    border: 2px solid var(--line);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: sp .8s linear infinite;
+  }
+  @keyframes sp { to { transform: rotate(360deg); } }
+
+  /* ---------- 输入 ---------- */
+  footer {
+    flex: 0 0 auto;
+    border-top: 1px solid var(--line);
+    padding: 12px 20px 14px;
+  }
+  .box { max-width: 760px; margin: 0 auto; }
+
+  .field {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 8px 8px 8px 12px;
+  }
+  .field:focus-within { border-color: #444; }
+
+  textarea {
+    flex: 1;
+    background: none;
+    border: none;
+    outline: none;
+    resize: none;
+    color: var(--fg);
+    font: inherit;
+    line-height: 1.5;
+    max-height: 180px;
+    min-height: 24px;
+    padding: 4px 0;
+  }
+  textarea::placeholder { color: var(--fg-mute); }
+
+  .bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--fg-mute);
+  }
+
+  /* ---------- 按钮 ---------- */
+  button {
+    font: inherit;
+    font-size: 13px;
+    background: var(--bg-3);
+    color: var(--fg);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 6px 12px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  button:hover { background: #333; }
+  button:disabled { opacity: .4; cursor: default; }
+  button.pri {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  button.pri:hover { background: var(--accent-d); }
+  button.icon { padding: 6px 9px; }
+  button.rec { background: var(--danger); border-color: var(--danger);
+               color: #fff; }
+  button.ghost { background: none; }
+
+  /* ---------- 设置 ---------- */
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.6);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+  }
+  .overlay.show { display: flex; }
+
+  .modal {
+    width: 520px;
+    max-width: calc(100vw - 40px);
+    max-height: calc(100vh - 80px);
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+  }
+  .modal h2 {
+    font-size: 14px;
+    font-weight: 600;
+    padding: 15px 18px;
+    border-bottom: 1px solid var(--line);
+  }
+  .modal .content { padding: 18px; overflow-y: auto; }
+  .modal .foot {
+    padding: 12px 18px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .fld { margin-bottom: 15px; }
+  .fld label {
+    display: block;
+    font-size: 12px;
+    color: var(--fg-dim);
+    margin-bottom: 6px;
+  }
+  .fld input[type=text],
+  .fld input[type=number],
+  .fld select {
+    width: 100%;
+    background: var(--bg);
+    color: var(--fg);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 8px 10px;
+    font: inherit;
+    font-size: 13px;
+    outline: none;
+  }
+  .fld input:focus, .fld select:focus { border-color: #444; }
+  .fld small { color: var(--fg-mute); font-size: 11.5px;
+               display: block; margin-top: 5px; line-height: 1.5; }
+
+  .chk { display: flex; align-items: center; gap: 8px;
+         font-size: 13px; color: var(--fg-dim); }
+  .chk input { accent-color: var(--accent); }
+
+  /* 滚动条 */
+  ::-webkit-scrollbar { width: 9px; height: 9px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #3a3a3a; border-radius: 5px; }
+  ::-webkit-scrollbar-thumb:hover { background: #4a4a4a; }
+
+  /* toast */
+  #toast {
+    position: fixed;
+    bottom: 22px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-3);
+    border: 1px solid var(--line);
+    color: var(--fg);
+    padding: 9px 16px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .18s;
+    z-index: 99;
+  }
+  #toast.show { opacity: 1; }
+
+  /* ---------- 微信 / 记忆面板 ---------- */
+  .wx-item, .mem-item {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .wx-item:last-child, .mem-item:last-child { border-bottom: none; }
+  .wx-head, .mem-head {
+    font-size: 12px;
+    color: var(--fg-dim);
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .wx-when, .mem-when { color: var(--fg-mute); font-size: 11.5px; }
+  .mem-kind {
+    color: var(--fg-mute);
+    font-size: 11px;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 0 5px;
+  }
+  .mem-score {
+    margin-left: auto;
+    color: var(--accent);
+    font-size: 11.5px;
+  }
+  .wx-text, .mem-text {
+    font-size: 13px;
+    color: var(--fg);
+    line-height: 1.6;
+    word-break: break-word;
+    white-space: pre-wrap;
+  }
+  .mem-stat {
+    font-size: 12px;
+    color: var(--fg-mute);
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 6px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== 侧栏 ==================== -->
+<aside id="side">
+  <div class="brand">迷你助手<span>Mini Assistant</span></div>
+
+  <div class="side-actions">
+    <button class="pri" style="flex:1" onclick="newChat()">新对话</button>
+    <button class="icon ghost" onclick="toggleSide()" title="收起">◀</button>
+  </div>
+
+  <div class="side-body">
+    <div class="side-title">状态</div>
+    <div class="row"><span><i class="dot" id="d-back"></i>后端</span>
+      <span class="v" id="v-back">检查中</span></div>
+    <div class="row"><span><i class="dot" id="d-tts"></i>朗读</span>
+      <span class="v" id="v-tts">—</span></div>
+    <div class="row"><span><i class="dot" id="d-asr"></i>识别</span>
+      <span class="v" id="v-asr">—</span></div>
+
+    <div class="side-title">会话</div>
+    <div class="row"><span>session</span>
+      <span class="v" id="v-sid" style="max-width:110px;
+        overflow:hidden;text-overflow:ellipsis">—</span></div>
+    <div class="row"><span>条数</span>
+      <span class="v" id="v-count">0</span></div>
+
+    <div class="side-title">功能</div>
+    <div class="row"><span><i class="dot" id="d-mem"></i>记忆</span>
+      <span class="v" id="v-mem">—</span></div>
+    <div class="row"><span><i class="dot" id="d-wx"></i>微信</span>
+      <span class="v" id="v-wx">—</span></div>
+    <div class="row"><span><i class="dot" id="d-pro"></i>主动</span>
+      <span class="v" id="v-pro">—</span></div>
+    <div class="row"><span><i class="dot" id="d-vault"></i>保险箱</span>
+      <span class="v" id="v-vault">—</span></div>
+
+    <div class="side-title">工具</div>
+    <div class="row" style="cursor:pointer" onclick="doShot()">
+      <span>看屏幕</span><span class="v">›</span></div>
+    <div class="row" style="cursor:pointer" onclick="doCam()">
+      <span>拍照看图</span><span class="v">›</span></div>
+    <div class="row" style="cursor:pointer" onclick="openWx()">
+      <span>微信消息</span><span class="v" id="v-wxnew">›</span></div>
+    <div class="row" style="cursor:pointer" onclick="openMem()">
+      <span>记忆库</span><span class="v">›</span></div>
+
+    <div class="side-title">操作</div>
+    <div class="row" style="cursor:pointer" onclick="openCfg()">
+      <span>设置</span><span class="v">›</span></div>
+    <div class="row" style="cursor:pointer" onclick="exportMd()">
+      <span>导出 Markdown</span><span class="v">›</span></div>
+    <div class="row" style="cursor:pointer" onclick="clearAll()">
+      <span>清空历史</span><span class="v">›</span></div>
+  </div>
+</aside>
+
+<!-- ==================== 主区 ==================== -->
+<main>
+  <header>
+    <button class="icon ghost" id="showBtn" style="display:none"
+            onclick="toggleSide()" title="展开">▶</button>
+    <span class="title" id="hint">就绪</span>
+    <span class="spacer"></span>
+    <button class="ghost" onclick="stopSpeak()">停止朗读</button>
+  </header>
+
+  <div id="list">
+    <div class="wrap" id="msgs">
+      <div class="empty">
+        <b>开始对话</b><br>
+        输入文字，或点麦克风说话
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="box">
+      <div class="field">
+        <textarea id="in" rows="1"
+          placeholder="输入消息，Enter 发送，Shift+Enter 换行"></textarea>
+        <button class="icon" id="micBtn" onclick="rec()"
+                title="按住说话">🎤</button>
+        <button class="pri" id="sendBtn" onclick="send()">发送</button>
+      </div>
+      <div class="bar">
+        <label class="chk">
+          <input type="checkbox" id="speak" checked> 朗读回复
+        </label>
+        <span class="spacer"></span>
+        <span id="tip"></span>
+      </div>
+    </div>
+  </footer>
+</main>
+
+<!-- ==================== 设置 ==================== -->
+<div class="overlay" id="cfgOverlay">
+  <div class="modal">
+    <h2>设置</h2>
+    <div class="content">
+      <div class="fld">
+        <label>服务端口</label>
+        <input type="number" id="c-port">
+        <small>改完要重启程序才生效。</small>
+      </div>
+
+      <div class="fld">
+        <label>DSH 路径（bin.js）</label>
+        <input type="text" id="c-dsh" placeholder="留空自动查找">
+        <small>一般不用填。找不到时才需要手填。</small>
+      </div>
+
+      <div class="fld">
+        <label>DSH Profile</label>
+        <input type="text" id="c-prof">
+        <small>默认 headless。装了别的 profile 可以改。</small>
+      </div>
+
+      <div class="fld">
+        <label>工作目录</label>
+        <input type="text" id="c-work" placeholder="留空 = 程序所在目录">
+        <small>AI 在这个目录里读写文件。</small>
+      </div>
+
+      <div class="fld">
+        <label>朗读引擎</label>
+        <select id="c-tts">
+          <option value="edge">edge-tts（在线，音质好）</option>
+          <option value="pyttsx3">pyttsx3（离线，音质一般）</option>
+          <option value="off">关闭</option>
+        </select>
+      </div>
+
+      <div class="fld">
+        <label>朗读音色</label>
+        <input type="text" id="c-voice">
+        <small>edge-tts 的音色名。中文常用：
+          zh-CN-XiaoxiaoNeural（女）、zh-CN-YunxiNeural（男）</small>
+      </div>
+
+      <div class="fld">
+        <label>语速</label>
+        <input type="number" id="c-speed" step="0.1" min="0.5" max="2">
+      </div>
+
+      <div class="fld">
+        <label>识别引擎</label>
+        <select id="c-asr">
+          <option value="funasr">FunASR（中文准，需本地模型）</option>
+          <option value="whisper">faster-whisper（体积小）</option>
+          <option value="off">关闭</option>
+        </select>
+      </div>
+
+      <div class="fld">
+        <label class="chk"><input type="checkbox" id="c-ven">
+          默认朗读回复</label>
+      </div>
+
+      <div class="fld" style="border-top:1px solid var(--line);
+           padding-top:15px">
+        <label class="chk"><input type="checkbox" id="c-memauto">
+          自动记住对话（长期记忆）</label>
+        <small>聊过的东西自动存下来，以后提问会先检索相关记忆。</small>
+      </div>
+
+      <div class="fld">
+        <label>每次召回几条记忆</label>
+        <input type="number" id="c-memrecall" min="0" max="10">
+        <small>0 = 不用记忆。太多会拖慢回复。</small>
+      </div>
+
+      <div class="fld" style="border-top:1px solid var(--line);
+           padding-top:15px">
+        <label class="chk"><input type="checkbox" id="c-proon">
+          主动助手</label>
+        <small>开了之后它会自己查微信新消息并念出来，
+          到点还会提醒你。默认关。</small>
+      </div>
+
+      <div class="fld">
+        <label>安静时段（不打扰）</label>
+        <input type="text" id="c-quiet"
+          placeholder="23:30,07:30">
+        <small>格式「开始,结束」，用英文逗号。跨午夜也可以。</small>
+      </div>
+
+      <div class="fld">
+        <label>微信查新间隔（秒）</label>
+        <input type="number" id="c-wxiv" min="20" max="3600">
+      </div>
+
+      <div class="fld" style="border-top:1px solid var(--line);
+           padding-top:15px">
+        <label class="chk"><input type="checkbox" id="c-vaulton">
+          保险箱自动加密</label>
+        <small>把看过的截图/照片自动加密存起来。密钥绑本机，
+          拷走文件也解不开。</small>
+      </div>
+
+      <div class="fld">
+        <label>多久后加密（秒）</label>
+        <input type="number" id="c-vaultdelay" min="10" max="3600">
+        <small>太短的话 AI 可能还没来得及看图就被收走了。</small>
+      </div>
+
+      <div class="fld">
+        <label>配置文件位置</label>
+        <input type="text" id="c-path" readonly>
+      </div>
+    </div>
+    <div class="foot">
+      <button onclick="closeCfg()">取消</button>
+      <button class="pri" onclick="saveCfg()">保存</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- ==================== 微信面板 ==================== -->
+<div class="overlay" id="wxOverlay">
+  <div class="modal" style="width:640px">
+    <h2>微信消息 <span style="float:right;font-weight:400;
+      font-size:12px;color:var(--fg-mute)" id="wxSub"></span></h2>
+    <div class="content" id="wxBody"></div>
+    <div class="foot">
+      <button onclick="resetWx()">重置已读</button>
+      <button onclick="closeWx()">关闭</button>
+      <button class="pri" onclick="speakWx()">念出来</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 记忆面板 ==================== -->
+<div class="overlay" id="memOverlay">
+  <div class="modal" style="width:680px">
+    <h2>长期记忆</h2>
+    <div class="content" id="memBody"></div>
+    <div class="foot">
+      <input type="text" id="memQ" placeholder="搜一下…"
+        style="flex:1;background:var(--bg);color:var(--fg);
+        border:1px solid var(--line);border-radius:var(--radius);
+        padding:7px 10px;font:inherit;font-size:13px;outline:none">
+      <button onclick="loadMem(document.getElementById('memQ').value)">
+        搜索</button>
+      <button onclick="loadMem('')">全部</button>
+      <button onclick="clearMem()">清空</button>
+      <button class="pri" onclick="closeMem()">关闭</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = location.origin;
+let SESSION = '';
+let BUSY = false;
+let CFG = {};
+let DEF = {};
+
+/* ---------- 小工具 ---------- */
+function esc(s) {
+  return String(s).replace(/[&<>"]/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+/* 极简 markdown：代码块 + 行内代码 + 加粗 */
+function md(s) {
+  let t = esc(s);
+  const blocks = [];
+  t = t.replace(/```([\s\S]*?)```/g, (m, code) => {
+    blocks.push('<pre><code>' + code.replace(/^\n/, '') + '</code></pre>');
+    return '\u0000' + (blocks.length - 1) + '\u0000';
+  });
+  t = t.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+  t = t.replace(/\*\*([^*\n]+)\*\*/g, '<b>$1</b>');
+  t = t.replace(/\u0000(\d+)\u0000/g, (m, i) => blocks[+i]);
+  return t;
+}
+function toast(msg, ms = 2000) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), ms);
+}
+function hint(s) { document.getElementById('hint').textContent = s; }
+function dot(id, cls, text) {
+  const d = document.getElementById(id);
+  d.className = 'dot' + (cls ? ' ' + cls : '');
+  if (text !== undefined) {
+    document.getElementById(id.replace('d-', 'v-')).textContent = text;
+  }
+}
+
+/* ---------- 渲染 ---------- */
+function addMsg(role, text, meta) {
+  const box = document.getElementById('msgs');
+  const e = box.querySelector('.empty');
+  if (e) e.remove();
+  const div = document.createElement('div');
+  div.className = 'msg' + (role === 'me' ? ' me' : '');
+  div.innerHTML =
+    '<div class="who">' + (role === 'me' ? '你' : '助手') + '</div>' +
+    '<div class="body">' + md(text) + '</div>' +
+    (meta ? '<div class="meta">' + esc(meta) + '</div>' : '');
+  box.appendChild(div);
+  scrollDown();
+  return div;
+}
+function addThink() {
+  const box = document.getElementById('msgs');
+  const e = box.querySelector('.empty');
+  if (e) e.remove();
+  const div = document.createElement('div');
+  div.className = 'msg';
+  div.id = 'thinking';
+  div.innerHTML = '<div class="who">助手</div>' +
+    '<div class="think"><i class="spin"></i><span id="thTxt">思考中…</span></div>';
+  box.appendChild(div);
+  scrollDown();
+  return div;
+}
+function scrollDown() {
+  const l = document.getElementById('list');
+  l.scrollTop = l.scrollHeight;
+}
+
+/* ---------- 状态 ---------- */
+async function refresh() {
+  try {
+    const r = await fetch(API + '/api/state');
+    const d = await r.json();
+    const b = d.backend || {};
+    if (b.ok) dot('d-back', 'on', '可用');
+    else dot('d-back', 'bad', '不可用');
+
+    const v = d.voice || {};
+    dot('d-tts', v.tts && v.tts !== '未加载' ? 'on' : '',
+        v.tts || '—');
+    dot('d-asr', v.asr && v.asr !== '未加载' ? 'on' : '',
+        v.asr || '—');
+
+    // ---- 功能状态 ----
+    const m = d.memory || {};
+    dot('d-mem', m.count > 0 ? 'on' : '', (m.count || 0) + ' 条');
+    const wx = d.wechat || {};
+    dot('d-wx', wx.ok ? 'on' : 'bad',
+        wx.ok ? (wx.sessions + ' 会话') : '未找到');
+    const pv = d.proactive || {};
+    dot('d-pro', pv.on ? 'on' : '', pv.on ? '开' : '关');
+    const vt = d.vault || {};
+    dot('d-vault', vt.on ? 'on' : '', vt.on ? '开' : '关');
+
+    // 微信未读数
+    const wn = document.getElementById('v-wxnew');
+    if (wn) {
+      fetch(API + '/api/wx/new').then(rr => rr.json())
+        .then(dd => {
+          const n = dd.count || 0;
+          wn.textContent = n ? n + ' 条新' : '›';
+          wn.style.color = n ? 'var(--accent)' : '';
+        }).catch(() => {});
+    }
+
+    SESSION = d.session || '';
+    document.getElementById('v-sid').textContent =
+      SESSION ? SESSION.slice(-12) : '新会话';
+    CFG = d.config || {};
+    document.getElementById('speak').checked =
+      CFG.voice_enabled !== false;
+    if (!b.ok) hint(b.error || '后端不可用');
+  } catch (e) {
+    dot('d-back', 'bad', '连接失败');
+  }
+}
+
+/* ---------- 工具 ---------- */
+let TOOL_BUSY = false;
+
+function toolHint(s) {
+  const el = document.getElementById('tip');
+  if (el) el.textContent = s || '';
+}
+
+async function doShot(ask) {
+  if (TOOL_BUSY) return;
+  TOOL_BUSY = true;
+  const q = ask || prompt('看图要问什么？（留空 = 自由描述）',
+                          '这张屏幕上主要是什么？');
+  if (q === null) { TOOL_BUSY = false; return; }
+  const th = addThink();
+  hint('截屏中…');
+  try {
+    const r1 = await fetch(API + '/api/look/shot', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: '{}'});
+    const s = await r1.json();
+    if (!s.ok) { th.remove(); toast('截屏失败：' + (s.error || '')); return; }
+    addMsg('me', '［看屏幕］' + (q || '描述一下'));
+    hint('AI 看图…');
+    const r2 = await fetch(API + '/api/look/see', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({path: s.path, question: q, speak: false})});
+    const d2 = await r2.json();
+    th.remove();
+    if (d2.ok) {
+      addMsg('ai', d2.text || '', d2.elapsed + 's');
+      if (document.getElementById('speak').checked) {
+        fetch(API + '/api/voice', {
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({text: d2.text})});
+      }
+    } else {
+      addMsg('ai', '⚠️ ' + (d2.error || '看图失败'));
+    }
+  } catch (e) {
+    th.remove(); addMsg('ai', '⚠️ ' + e.message);
+  } finally {
+    TOOL_BUSY = false; hint('就绪');
+  }
+}
+
+async function doCam() {
+  if (TOOL_BUSY) return;
+  const q = prompt('拍照要问什么？', '这张照片里是什么？');
+  if (q === null) return;
+  TOOL_BUSY = true;
+  const th = addThink();
+  hint('拍照中…');
+  try {
+    const r1 = await fetch(API + '/api/look/cam', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: '{}'});
+    const s = await r1.json();
+    if (!s.ok) { th.remove(); toast('拍照失败：' + (s.error || '')); return; }
+    addMsg('me', '［拍照］' + q);
+    hint('AI 看图…');
+    const r2 = await fetch(API + '/api/look/see', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({path: s.path, question: q})});
+    const d2 = await r2.json();
+    th.remove();
+    addMsg('ai', d2.ok ? (d2.text || '') : ('⚠️ ' + (d2.error || '失败')),
+           d2.elapsed ? d2.elapsed + 's' : '');
+  } catch (e) {
+    th.remove(); addMsg('ai', '⚠️ ' + e.message);
+  } finally {
+    TOOL_BUSY = false; hint('就绪');
+  }
+}
+
+/* ---------- 微信面板 ---------- */
+async function openWx() {
+  const ov = document.getElementById('wxOverlay');
+  const body = document.getElementById('wxBody');
+  ov.classList.add('show');
+  body.innerHTML = '<div class="think"><i class="spin"></i>' +
+    '<span>读取中…</span></div>';
+  try {
+    const r = await fetch(API + '/api/wx/new');
+    const d = await r.json();
+    const items = d.items || [];
+    if (!items.length) {
+      body.innerHTML = '<div class="empty" style="padding:40px">' +
+        '没有新消息</div>';
+    } else {
+      body.innerHTML = items.slice().reverse().map(it => {
+        const tag = it.cat === 'urgent'
+          ? '<span style="color:var(--danger)">急</span> '
+          : it.cat === 'ad'
+            ? '<span style="color:var(--fg-mute)">广告</span> '
+            : '';
+        return '<div class="wx-item">' +
+          '<div class="wx-head">' + esc(it.who) +
+          ' <span class="wx-when">' + esc(it.when) + '</span> ' + tag +
+          '</div>' +
+          '<div class="wx-text">' + esc(it.text) + '</div></div>';
+      }).join('');
+    }
+  } catch (e) {
+    body.innerHTML = '<div class="empty">读取失败：' + esc(e.message) +
+      '</div>';
+  }
+}
+function closeWx() {
+  document.getElementById('wxOverlay').classList.remove('show');
+}
+async function speakWx() {
+  toast('播报中…');
+  await fetch(API + '/api/wx/speak', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: '{}'});
+  closeWx();
+  refresh();
+}
+async function resetWx() {
+  if (!confirm('重置已读记录？下次会把最近的重新算成新消息。')) return;
+  await fetch(API + '/api/wx/reset', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: '{}'});
+  toast('已重置');
+  openWx();
+}
+
+/* ---------- 记忆面板 ---------- */
+async function openMem() {
+  const ov = document.getElementById('memOverlay');
+  const body = document.getElementById('memBody');
+  ov.classList.add('show');
+  await loadMem('');
+}
+async function loadMem(q) {
+  const body = document.getElementById('memBody');
+  body.innerHTML = '<div class="think"><i class="spin"></i>' +
+    '<span>读取中…</span></div>';
+  try {
+    let url = API + '/api/memory';
+    if (q) url = API + '/api/memory/find?query=' + encodeURIComponent(q);
+    const r = await fetch(url);
+    const d = await r.json();
+    const items = q ? (d.items || []) : (d.items || []).slice().reverse();
+    const st = d.stats || {};
+    let head = '';
+    if (!q && st.count !== undefined) {
+      head = '<div class="mem-stat">共 ' + st.count + ' 条' +
+        (st.vector_ready ? ' · 语义检索可用' : ' · 仅关键词检索') +
+        '</div>';
+    }
+    if (!items.length) {
+      body.innerHTML = head + '<div class="empty" style="padding:40px">' +
+        (q ? '没找到相关记忆' : '还没有记忆。聊过之后会自动记住。') +
+        '</div>';
+      return;
+    }
+    body.innerHTML = head + items.map((it, i) => {
+      const t = it.text || '';
+      const when = it.when || new Date((it.t || 0) * 1000)
+        .toLocaleString('zh-CN', {month:'2-digit', day:'2-digit',
+                                  hour:'2-digit', minute:'2-digit'});
+      const sc = it.score !== undefined
+        ? ' <span class="mem-score">' + it.score + '</span>' : '';
+      return '<div class="mem-item"><div class="mem-head">' +
+        '<span class="mem-when">' + esc(when) + '</span>' +
+        '<span class="mem-kind">' + esc(it.kind || '') + '</span>' + sc +
+        '</div><div class="mem-text">' + esc(t.slice(0, 400)) +
+        '</div></div>';
+    }).join('');
+  } catch (e) {
+    body.innerHTML = '<div class="empty">读取失败：' + esc(e.message) +
+      '</div>';
+  }
+}
+function closeMem() {
+  document.getElementById('memOverlay').classList.remove('show');
+}
+async function clearMem() {
+  if (!confirm('清空全部长期记忆？')) return;
+  await fetch(API + '/api/memory/clear', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: '{}'});
+  toast('已清空');
+  loadMem('');
+  refresh();
+}
+
+async function loadHistory() {
+  const r = await fetch(API + '/api/history');
+  const d = await r.json();
+  const items = d.items || [];
+  const box = document.getElementById('msgs');
+  box.innerHTML = '';
+  if (!items.length) {
+    box.innerHTML = '<div class="empty"><b>开始对话</b><br>' +
+      '输入文字，或点麦克风说话</div>';
+  } else {
+    for (const it of items) {
+      addMsg(it.role === 'user' ? 'me' : 'ai', it.text || '',
+             it.elapsed ? it.elapsed + 's' : '');
+    }
+  }
+  document.getElementById('v-count').textContent = items.length;
+  scrollDown();
+}
+
+/* ---------- 发送 ---------- */
+async function send() {
+  if (BUSY) return;
+  const ta = document.getElementById('in');
+  const text = ta.value.trim();
+  if (!text) return;
+
+  ta.value = '';
+  ta.style.height = 'auto';
+  BUSY = true;
+  document.getElementById('sendBtn').disabled = true;
+  addMsg('me', text);
+  const th = addThink();
+  hint('等待回复…');
+  const t0 = Date.now();
+
+  try {
+    const r = await fetch(API + '/api/ask', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        text,
+        session: SESSION,
+        speak: document.getElementById('speak').checked,
+      }),
+    });
+    const d = await r.json();
+    th.remove();
+    const el = ((Date.now() - t0) / 1000).toFixed(1) + 's';
+    if (d.ok) {
+      addMsg('ai', d.text || '', el);
+      SESSION = d.session || SESSION;
+      document.getElementById('v-sid').textContent =
+        SESSION ? SESSION.slice(-12) : '新会话';
+    } else {
+      addMsg('ai', '⚠️ ' + (d.error || '出错了'), el);
+    }
+    document.getElementById('v-count').textContent =
+      document.querySelectorAll('#msgs .msg').length;
+  } catch (e) {
+    th.remove();
+    addMsg('ai', '⚠️ 请求失败：' + e.message);
+  } finally {
+    BUSY = false;
+    document.getElementById('sendBtn').disabled = false;
+    hint('就绪');
+    document.getElementById('in').focus();
+  }
+}
+
+async function newChat() {
+  SESSION = '';
+  document.getElementById('v-sid').textContent = '新会话';
+  hint('已开新会话，下次提问会用新 session');
+  toast('已开新会话');
+}
+
+async function stopSpeak() {
+  await fetch(API + '/api/stop', {method: 'POST',
+    headers: {'Content-Type': 'application/json'}, body: '{}'});
+  toast('已停止朗读');
+}
+
+async function exportMd() {
+  const r = await fetch(API + '/api/export');
+  const t = await r.text();
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([t], {type: 'text/markdown'}));
+  a.download = '对话记录.md';
+  a.click();
+}
+
+async function clearAll() {
+  if (!confirm('清空所有对话历史？')) return;
+  await fetch(API + '/api/clear', {method: 'POST',
+    headers: {'Content-Type': 'application/json'}, body: '{}'});
+  await loadHistory();
+  toast('已清空');
+}
+
+/* ---------- 录音 ---------- */
+async function rec() {
+  const btn = document.getElementById('micBtn');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.classList.add('rec');
+  btn.textContent = '●';
+  hint('录音中…');
+
+  try {
+    const secs = 6;
+    const r1 = await fetch(API + '/api/record', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({seconds: secs}),
+    });
+    const d1 = await r1.json();
+    if (!d1.ok) { toast('录音失败：' + (d1.error || '')); return; }
+
+    hint('识别中…');
+    const r2 = await fetch(API + '/api/asr', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({path: d1.path}),
+    });
+    const d2 = await r2.json();
+    if (d2.ok && d2.text) {
+      const ta = document.getElementById('in');
+      ta.value = d2.text;
+      ta.focus();
+      autoGrow();
+      hint('识别完成');
+    } else {
+      toast('识别失败：' + (d2.error || '没听清'));
+    }
+  } catch (e) {
+    toast('出错：' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove('rec');
+    btn.textContent = '🎤';
+    setTimeout(() => hint('就绪'), 1500);
+  }
+}
+
+/* ---------- 设置 ---------- */
+async function openCfg() {
+  const r = await fetch(API + '/api/config');
+  const d = await r.json();
+  const v = d.values || {};
+  DEF = d.defaults || {};
+  const S = (id, val) => { document.getElementById(id).value =
+    (val === undefined || val === null) ? '' : val; };
+  S('c-port', v.port);
+  S('c-dsh', v.dsh_bin);
+  S('c-prof', v.dsh_profile);
+  S('c-work', v.work_dir);
+  S('c-tts', v.tts_engine);
+  S('c-voice', v.tts_voice);
+  S('c-speed', v.tts_speed);
+  S('c-asr', v.asr_engine);
+  S('c-path', d.path || '');
+  document.getElementById('c-ven').checked =
+    v.voice_enabled !== false;
+
+  // ---- 记忆 / 主动 / 保险箱 ----
+  document.getElementById('c-memauto').checked =
+    v.memory_auto !== false;
+  S('c-memrecall', v.memory_recall);
+  const pro = v.proactive || {};
+  document.getElementById('c-proon').checked = pro.on === true;
+  S('c-quiet', (pro.quiet || []).join(','));
+  S('c-wxiv', pro.wechat_interval);
+  document.getElementById('c-vaulton').checked = v.vault_on === true;
+  S('c-vaultdelay', v.vault_delay);
+
+  document.getElementById('cfgOverlay').classList.add('show');
+}
+function closeCfg() {
+  document.getElementById('cfgOverlay').classList.remove('show');
+}
+async function saveCfg() {
+  const G = id => document.getElementById(id);
+  const quiet = G('c-quiet').value.split(',')
+    .map(s => s.trim()).filter(s => /^\d{1,2}:\d{2}$/.test(s));
+  const values = {
+    port: parseInt(G('c-port').value, 10) || 8800,
+    dsh_bin: G('c-dsh').value.trim(),
+    dsh_profile: G('c-prof').value.trim() || 'headless',
+    work_dir: G('c-work').value.trim(),
+    tts_engine: G('c-tts').value,
+    tts_voice: G('c-voice').value.trim(),
+    tts_speed: parseFloat(G('c-speed').value) || 1.0,
+    asr_engine: G('c-asr').value,
+    voice_enabled: G('c-ven').checked,
+
+    memory_auto: G('c-memauto').checked,
+    memory_recall: parseInt(G('c-memrecall').value, 10) || 0,
+
+    proactive: {
+      on: G('c-proon').checked,
+      quiet: quiet.length === 2 ? quiet : ['23:30', '07:30'],
+      wechat_interval:
+        parseInt(G('c-wxiv').value, 10) || 60,
+    },
+
+    vault_on: G('c-vaulton').checked,
+    vault_delay: parseInt(G('c-vaultdelay').value, 10) || 120,
+  };
+  const r = await fetch(API + '/api/config', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({values}),
+  });
+  const d = await r.json();
+  if (d.ok) { toast('已保存'); closeCfg(); refresh(); }
+  else toast('保存失败');
+}
+
+/* ---------- 侧栏 ---------- */
+function toggleSide() {
+  const a = document.getElementById('side');
+  a.classList.toggle('hide');
+  document.getElementById('showBtn').style.display =
+    a.classList.contains('hide') ? '' : 'none';
+}
+
+/* ---------- 输入框 ---------- */
+function autoGrow() {
+  const ta = document.getElementById('in');
+  ta.style.height = 'auto';
+  ta.style.height = Math.min(ta.scrollHeight, 180) + 'px';
+}
+
+window.addEventListener('DOMContentLoaded', async () => {
+  const ta = document.getElementById('in');
+  ta.addEventListener('input', autoGrow);
+  ta.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      send();
+    }
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeCfg();
+  });
+  await refresh();
+  await loadHistory();
+  ta.focus();
+  setInterval(refresh, 15000);
+
+  // 调试用：?open=mem / ?open=wx 自动弹面板（截图/演示方便）
+  const OPEN_PANEL = new URLSearchParams(location.search).get('open');
+  if (OPEN_PANEL === 'mem') openMem();
+  if (OPEN_PANEL === 'wx') openWx();
+  if (OPEN_PANEL === 'cfg') openCfg();
+});
+</script>
+</body>
+</html>

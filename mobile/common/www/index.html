@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>迷你助手</title>
+<!--
+  手机版界面
+
+  设计原则：
+    · 深色、克制 —— 跟桌面版一套配色
+    · 一个文件、零依赖 —— 打包进 APK 也能离线打开
+    · 后端地址**不内置**，第一次打开让用户填
+-->
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ==================== 首次配置 ==================== -->
+<div id="setup" class="overlay show">
+  <div class="setup-box">
+    <h1>迷你助手</h1>
+    <p class="muted">第一次使用，先填一下后端的地址</p>
+
+    <label>后端地址</label>
+    <input id="s-host" type="text" inputmode="url"
+           placeholder="IP 地址和端口"
+           autocomplete="off" autocapitalize="off"
+           spellcheck="false">
+
+    <p class="hint">
+      这是跑着「迷你助手」服务的那台电脑的地址。<br>
+      在电脑上运行 <code>python run.py</code>，
+      它启动时会打印自己的地址。
+    </p>
+
+    <div class="row">
+      <button class="ghost" onclick="scan()">自动搜索</button>
+      <button class="pri" onclick="saveSetup()">连接</button>
+    </div>
+    <div id="s-err" class="err"></div>
+  </div>
+</div>
+
+<!-- ==================== 主界面 ==================== -->
+<div id="app" class="hidden">
+  <header>
+    <button class="icon" onclick="openMenu()">
+      <svg viewBox="0 0 24 24" width="20" height="20">
+        <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" fill="none"/>
+      </svg>
+    </button>
+    <span id="title">迷你助手</span>
+    <button class="icon" onclick="newChat()" title="新对话">
+      <svg viewBox="0 0 24 24" width="20" height="20">
+        <path d="M12 5v14M5 12h14" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" fill="none"/>
+      </svg>
+    </button>
+  </header>
+
+  <main id="list">
+    <div class="wrap" id="msgs">
+      <div class="empty">
+        <div class="logo">D</div>
+        <p>说点什么，或者点下面的麦克风</p>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="input-row">
+      <button class="icon mic" id="micBtn" onclick="record()">
+        <svg viewBox="0 0 24 24" width="22" height="22">
+          <path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"
+                fill="currentColor"/>
+          <path d="M5 11a7 7 0 0 0 14 0M12 18v4"
+                stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" fill="none"/>
+        </svg>
+      </button>
+      <textarea id="in" rows="1" placeholder="说点什么…"></textarea>
+      <button class="icon send" onclick="send()">
+        <svg viewBox="0 0 24 24" width="20" height="20">
+          <path d="M4 12l16-8-6 8 6 8z" fill="currentColor"/>
+        </svg>
+      </button>
+    </div>
+    <div class="status" id="status"></div>
+  </footer>
+</div>
+
+<!-- ==================== 侧栏菜单 ==================== -->
+<div id="menu" class="overlay">
+  <div class="menu-box">
+    <div class="menu-head">
+      <span>迷你助手</span>
+      <button class="icon" onclick="closeMenu()">✕</button>
+    </div>
+
+    <div class="menu-body">
+      <div class="sec">状态</div>
+      <div class="item"><span>后端</span>
+        <b id="m-back">检查中</b></div>
+      <div class="item"><span>地址</span>
+        <b id="m-host" class="small"></b></div>
+
+      <div class="sec">操作</div>
+      <div class="item tap" onclick="newChat()">
+        <span>新对话</span><b>›</b></div>
+      <div class="item tap" onclick="reconnect()">
+        <span>重新连接</span><b>›</b></div>
+      <div class="item tap" onclick="editHost()">
+        <span>改后端地址</span><b>›</b></div>
+      <div class="item tap" onclick="clearAll()">
+        <span>清空本地记录</span><b>›</b></div>
+
+      <div class="sec">关于</div>
+      <div class="item" style="display:block">
+        <p class="muted small" style="margin:0">
+          这是一个开源项目。数据都走你自己那台电脑，
+          不经过任何第三方服务器。
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>

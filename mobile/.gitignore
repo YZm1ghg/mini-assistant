@@ -1,0 +1,31 @@
+# 构建产物
+build/
+.gradle/
+local.properties
+*.apk
+*.aab
+
+# IDE
+.idea/
+*.iml
+.DS_Store
+
+# ⚠ 打包时会把 common/www 拷进各版本的 assets/
+#   所以那些拷贝不许提交（避免改了两份不一致）
+phone/app/src/main/assets/
+tablet/app/src/main/assets/
+watch/app/src/main/assets/
+
+# ⚠⚠ gradle wrapper 必须提交（踩过）
+#
+#   下面这几行是「反忽略」——
+#   上面的 *.jar 规则会挡掉所有 jar，
+#   但 gradle-wrapper.jar 是**必须带的**：
+#   它让别人 clone 下来不用装 gradle 就能构建。
+#
+#   这个 jar 只有 60KB，是 Gradle 官方的启动器，
+#   不含任何个人信息。
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+!gradlew
+!gradlew.bat

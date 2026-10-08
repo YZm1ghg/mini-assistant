@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
+<title>迷你助手 · 平板</title>
+<!--
+  平板版
+
+  和手机版**共用** app.js / style.css，只多两个东西：
+    ① 左侧常驻会话栏（宽屏才有意义）
+    ② 更宽的阅读区
+  小屏时会自动退化成手机版布局。
+-->
+<link rel="stylesheet" href="style.css">
+<style>
+  /* 只在宽屏生效 —— 窄屏时这些规则不参与 */
+  @media (min-width: 700px) {
+    body { flex-direction: row; }
+
+    /* ---- 左侧栏 ---- */
+    #side {
+      flex: 0 0 250px;
+      border-right: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-2);
+    }
+    #side .side-top {
+      padding: calc(var(--safe-t) + 14px) 16px 14px;
+      font-size: 15px;
+      font-weight: 600;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #side .side-top span { flex: 1; }
+    #side .side-body { flex: 1; overflow-y: auto; }
+
+    /* ---- 右侧主区 ---- */
+    #main-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    /* 手机上那个汉堡按钮在平板藏起来 */
+    #burger { display: none; }
+    /* 顶栏也更矮一些 */
+    #main-col header {
+      padding-top: calc(var(--safe-t) + 12px);
+      padding-bottom: 12px;
+    }
+    .wrap { max-width: 780px; }
+  }
+
+  /* 窄屏：左侧栏收起来 */
+  @media (max-width: 699px) {
+    #side { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== 首次配置 ==================== -->
+<div id="setup" class="overlay show">
+  <div class="setup-box">
+    <h1>迷你助手</h1>
+    <p class="muted">第一次使用，先填一下后端的地址</p>
+
+    <label>后端地址</label>
+    <input id="s-host" type="text" inputmode="url"
+           placeholder="IP 地址和端口"
+           autocomplete="off" autocapitalize="off"
+           spellcheck="false">
+
+    <p class="hint">
+      这是跑着「迷你助手」服务的那台电脑的地址。<br>
+      在电脑上运行 <code>python run.py</code>，
+      它启动时会打印自己的地址。
+    </p>
+
+    <div class="row">
+      <button class="ghost" onclick="scan()">自动搜索</button>
+      <button class="pri" onclick="saveSetup()">连接</button>
+    </div>
+    <div id="s-err" class="err"></div>
+  </div>
+</div>
+
+<!-- ==================== 主界面 ==================== -->
+<div id="app" class="hidden" style="display:flex;flex:1;width:100%;">
+
+  <!-- 左侧栏（宽屏） -->
+  <aside id="side">
+    <div class="side-top">
+      <span>迷你助手</span>
+      <button class="icon" onclick="newChat()" title="新对话">
+        <svg viewBox="0 0 24 24" width="18" height="18">
+          <path d="M12 5v14M5 12h14" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round"
+                fill="none"/>
+        </svg>
+      </button>
+    </div>
+    <div class="side-body">
+      <div class="sec">状态</div>
+      <div class="item"><span>后端</span><b id="m-back">检查中</b></div>
+      <div class="item"><span>地址</span>
+        <b id="m-host" class="small"></b></div>
+
+      <div class="sec">操作</div>
+      <div class="item tap" onclick="reconnect()">
+        <span>重新连接</span><b>›</b></div>
+      <div class="item tap" onclick="editHost()">
+        <span>改后端地址</span><b>›</b></div>
+      <div class="item tap" onclick="clearAll()">
+        <span>清空本地记录</span><b>›</b></div>
+    </div>
+  </aside>
+
+  <!-- 右侧主区 -->
+  <div id="main-col">
+    <header>
+      <button class="icon" id="burger" onclick="openMenu()">
+        <svg viewBox="0 0 24 24" width="20" height="20">
+          <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" fill="none"/>
+        </svg>
+      </button>
+      <span id="title">迷你助手</span>
+      <button class="icon" onclick="newChat()" title="新对话">
+        <svg viewBox="0 0 24 24" width="20" height="20">
+          <path d="M12 5v14M5 12h14" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" fill="none"/>
+        </svg>
+      </button>
+    </header>
+
+    <main id="list">
+      <div class="wrap" id="msgs">
+        <div class="empty">
+          <div class="logo">D</div>
+          <p>说点什么，或者点下面的麦克风</p>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <div class="input-row">
+        <button class="icon mic" id="micBtn" onclick="record()">
+          <svg viewBox="0 0 24 24" width="22" height="22">
+            <path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"
+                  fill="currentColor"/>
+            <path d="M5 11a7 7 0 0 0 14 0M12 18v4"
+                  stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" fill="none"/>
+          </svg>
+        </button>
+        <textarea id="in" rows="1" placeholder="说点什么…"></textarea>
+        <button class="icon send" onclick="send()">
+          <svg viewBox="0 0 24 24" width="20" height="20">
+            <path d="M4 12l16-8-6 8 6 8z" fill="currentColor"/>
+          </svg>
+        </button>
+      </div>
+      <div class="status" id="status"></div>
+    </footer>
+  </div>
+</div>
+
+<!-- ==================== 窄屏时的抽屉菜单 ==================== -->
+<div id="menu" class="overlay">
+  <div class="menu-box">
+    <div class="menu-head">
+      <span>迷你助手</span>
+      <button class="icon" onclick="closeMenu()">✕</button>
+    </div>
+    <div class="menu-body">
+      <div class="sec">状态</div>
+      <div class="item"><span>后端</span><b id="m-back2">检查中</b></div>
+      <div class="item"><span>地址</span>
+        <b id="m-host2" class="small"></b></div>
+
+      <div class="sec">操作</div>
+      <div class="item tap" onclick="newChat()">
+        <span>新对话</span><b>›</b></div>
+      <div class="item tap" onclick="reconnect()">
+        <span>重新连接</span><b>›</b></div>
+      <div class="item tap" onclick="editHost()">
+        <span>改后端地址</span><b>›</b></div>
+      <div class="item tap" onclick="clearAll()">
+        <span>清空本地记录</span><b>›</b></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="app.js"></script>
+<script>
+  // 平板有两个状态位（左栏 + 抽屉），共用时同步一下
+  (function () {
+    var old = window.refreshMenu;
+    window.refreshMenu = function () {
+      if (old) old();
+      var h1 = document.getElementById('m-host');
+      var h2 = document.getElementById('m-host2');
+      var b1 = document.getElementById('m-back');
+      var b2 = document.getElementById('m-back2');
+      if (h2 && h1) h2.textContent = h1.textContent;
+      if (b2 && b1) {
+        b2.textContent = b1.textContent;
+        b2.style.color = b1.style.color;
+      }
+    };
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+{
+  "_说明": [
+    "这是配置模板。用法：复制成 config.json 再改。",
+    "cp config.example.json config.json",
+    "",
+    "⚠ config.json 不该提交到 Git（见 .gitignore）——",
+    "  里面可能有你的路径、个人设置。",
+    "",
+    "各字段说明见 README.md 的「配置文件」一节。"
+  ],
+
+  "host": "127.0.0.1",
+  "port": 64874,
+  "port_fallback": [64284, 64895, 63140, 64676, 64076],
+
+  "dsh_bin": "",
+  "dsh_profile": "headless",
+  "timeout": 300,
+  "work_dir": "",
+
+  "voice_enabled": true,
+  "tts_engine": "edge",
+  "tts_voice": "zh-CN-XiaoxiaoNeural",
+  "tts_speed": 1.0,
+  "asr_engine": "funasr",
+  "asr_max_seconds": 30,
+
+  "history_limit": 200,
+  "memory_auto": true,
+  "memory_recall": 4,
+
+  "proactive": {
+    "on": false,
+    "wechat_interval": 60,
+    "wechat_speak": true,
+    "wechat_max": 3,
+    "daily": [],
+    "quiet": ["23:30", "07:30"]
+  },
+
+  "vault_on": false,
+  "vault_delay": 120
+}

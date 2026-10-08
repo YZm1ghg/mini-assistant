@@ -1,0 +1,58 @@
+// 迷你助手 平板
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.mini.assistant.tablet'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.mini.assistant.tablet"
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+    }
+
+    // ⚠ 用 release 签名配置（自签名，仅供自用/分享）
+    //   开源项目不该带别人的私钥 —— 这里用 debug 签名，
+    //   用户自己 build 出来就是自己的签名。
+    buildTypes {
+        release {
+            minifyEnabled false
+            // 不做混淆：代码量小，混淆反而影响排查
+            proguardFiles getDefaultProguardFile(
+                'proguard-android-optimize.txt')
+
+            // ⚠⚠ 不往 APK 里写 VCS（版本控制）信息
+            //
+            //   AGP 默认会把构建时的 git 信息写进
+            //       META-INF/version-control-info.textproto
+            //   里面可能包含**仓库路径、分支名、commit 号**。
+            //
+            //   本项目实测是 NO_SUPPORTED_VCS_FOUND（因为 mobile/
+            //   不是独立 git 仓库），但**不能靠运气** ——
+            //   用户如果把它放进 git 仓库里构建，就会带上这些信息。
+            //
+            //   ✅ 官方开关：VcsInfo.include = false
+            vcsInfo {
+                include = false
+            }
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    // 网页放在 assets/www，不压缩（否则 WebView 读不到）
+    androidResources {
+        noCompress 'html', 'js', 'css', 'json'
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+}
