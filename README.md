@@ -1,17 +1,54 @@
 # 迷你助手 · Mini Assistant
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
+[![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)](#)
+[![Zero Config](https://img.shields.io/badge/config-auto--detected-green.svg)](#自动查找外部依赖)
+
 一个**极简**的本地 AI 助手。后端接 [DeepSeek Harness](https://www.npmjs.com/package/@deepseek-ai/dsh)，
 前端是一个单页网页，带语音、长期记忆、看图、微信播报和加密。
 
-> 目标：**能读懂、能改、能跑起来**。
+还有**手机 / 平板 / 手表**三个独立的 Android 应用（[看这里](mobile/README.md)）。
+
+> **目标：能读懂、能改、能跑起来。**
 > 没有动画、没有皮肤、没有任何装饰性元素。
+>
+> **原则：不硬编码任何路径。** 所有外部依赖自动查找，
+> 换个电脑直接跑，不用翻代码改。
+
+---
+
+## 亮点
+
+| | |
+|---|---|
+| **零配置启动** | 自动找 Node / dsh / 模型 / ffmpeg，找不到会告诉你去哪装 |
+| **技能优先** | 29 个命令本地直答，**毫秒级**（「现在几点」19ms，走 AI 要 25 秒）|
+| **依赖最简** | 自写音频（替 soundfile+numpy）、自写 SAPI（替 pyttsx3）|
+| **绿色可移植** | 整个目录拷走就能用，数据都在 `data/` 里 |
+| **隐私优先** | 全本地运行，自带 `check_privacy.py` 一键体检 |
+| **三端覆盖** | 桌面网页 + 手机 + 平板 + 手表 |
+
+---
+
+## 目录
+
+- [是什么](#是什么)
+- [亮点](#亮点)
+- [快速开始](#快速开始)
+- [自动查找外部依赖](#自动查找外部依赖)
+- [手机 / 平板 / 手表](#手机--平板--手表)
+- [配置项](#配置文件)
+- [隐私](#隐私)
+- [踩过的坑](#踩过的坑)
+- [许可](#许可)
 
 ---
 
 ## 是什么
 
 一个套在 `dsh` 外面的轻量界面。`dsh` 本身是命令行工具，
-这个项目给它加了五样东西：
+这个项目给它加了这些：
 
 | 功能 | 一句话 |
 |---|---|
