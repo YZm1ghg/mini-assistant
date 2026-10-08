@@ -21,8 +21,50 @@ import time
 import webbrowser
 from pathlib import Path
 
-# 让 src 能被 import
-ROOT = Path(__file__).resolve().parent
+# ---- 让 src 能被 import ----
+#
+# ⚠⚠ 打包成 exe 后路径不一样（踩过）：
+#
+#   源码运行：
+#       __file__ = .../run.py
+#       项目根    = 它的上级
+#
+#   打包成单文件 exe：
+#       PyInstaller 把所有东西解包到 %TEMP%\_MEI123456
+#       并从那里运行 —— 所以 __file__ 指向**临时目录**。
+#       真正的「用户目录」是 exe 自己所在的位置。
+#
+#   ✅ 所以：
+#       RES  = 程序资源在哪（src/、ui/）—— 临时目录
+#       ROOT = 用户数据存哪（data/、config.json）—— exe 旁边
+#
+#   ⚠ config.py 里也会做同样的判断（它自己也要能独立跑），
+#     两边的逻辑必须一致。
+if getattr(sys, "frozen", False):
+    RES = Path(getattr(sys, "_MEIPASS", Path(sys.executable).parent))
+    ROOT = Path(sys.executable).resolve().parent
+
+    # ⚠⚠ 打包后必须强制 stdout 用 UTF-8（踩过）
+    #
+    #   PyInstaller 的 exe 默认用系统区域编码输出
+    #   （中文 Windows 是 GBK/cp936）。
+    #   我们的输出里有中文和 ● ○ 这类符号 ——
+    #   在 GBK 下会变成一堆问号和方块。
+    #
+    #   ✅ 显式把 stdout/stderr 换成 UTF-8。
+    #      加 errors="replace" 是保险 ——
+    #      万一终端不支持某些字符，也不会崩，
+    #      最多显示成问号。
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+else:
+    RES = Path(__file__).resolve().parent
+    ROOT = RES
+
+sys.path.insert(0, str(RES))
 sys.path.insert(0, str(ROOT))
 
 from src import config, server                        # noqa: E402

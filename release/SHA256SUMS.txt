@@ -1,4 +1,0 @@
-6985c8befa4a35bcba78aacb75974ca8744a292cc0a8c264c98d05e5ee12a952  mini-assistant-source.zip
-3f62693d6f37b74a0aa4414d02ccffc929f523c1f1d445680bd8e32ffbacba1c  mini-phone.apk
-f9d2d4d58f8d58cd13cde0a0a19df3eda7dee0eb406ff8ae3d0d861b0fef208f  mini-tablet.apk
-60b8274a8e722810b75a5949323c04583a9ea193020758646dcb406bc9805c38  mini-watch.apk

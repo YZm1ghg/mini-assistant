@@ -68,7 +68,13 @@ from . import (chat, config, dsh, find, intent, look,
                memory, proactive, skills, syscontrol, sysmon,
                vault, voice, wechat)
 
-UI = config.ROOT / "ui"
+# ⚠ 界面文件在**资源目录**，不是数据目录（踩过）
+#
+#   打包成 exe 后：
+#     config.ROOT  = exe 所在目录（用户数据放这儿）
+#     config.RES   = PyInstaller 解包的临时目录（程序自带文件）
+#   界面文件是被打包进去的，所以要用 RES 找。
+UI = config.UI_DIR
 
 
 def _json_default(o):

@@ -12,10 +12,39 @@ import threading
 from pathlib import Path
 from typing import Any
 
-# 项目根 = 本文件的上上级
-ROOT = Path(__file__).resolve().parent.parent
+# ---- 确定项目根目录 ----
+#
+# ⚠⚠ 打包成 exe 之后**不能**直接用 __file__（踩过，很关键）：
+#
+#   PyInstaller 的 --onefile 把所有文件解包到临时目录
+#   （%TEMP%\\_MEI123456），然后从那里运行。
+#   所以 __file__ 指向临时目录，**不是**用户看到的 exe 位置。
+#
+#   如果不管这个，有两个致命问题：
+#     ① data/ 写进临时目录 → 关掉程序，对话记录和记忆全没了
+#     ② config.json 也写在那儿 → 用户改了设置，下次启动就丢
+#
+#   ✅ 打包模式：用 sys.executable 的目录（exe 自己所在的位置）
+#   ✅ 源码模式：还是用 __file__
+#
+#   ⚠ sys.executable 在**打包后**才是 exe 路径；
+#     源码运行时它是 python.exe 的路径 ——
+#     所以必须用 sys.frozen 区分，不能混用。
+import sys as _sys
+
+if getattr(_sys, "frozen", False):
+    # 数据目录：exe 旁边（用户能看到、能改）
+    ROOT = Path(_sys.executable).resolve().parent
+    # 资源目录：PyInstaller 解包的临时目录（程序自带的东西）
+    RES = Path(getattr(_sys, "_MEIPASS", ROOT))
+else:
+    ROOT = Path(__file__).resolve().parent.parent
+    RES = ROOT
+
 CONFIG_PATH = ROOT / "config.json"
 DATA_DIR = ROOT / "data"
+# 界面文件在 RES 里（打包时被塞进去了）
+UI_DIR = RES / "ui"
 
 DEFAULTS: dict[str, Any] = {
     # ---- 服务 ----
