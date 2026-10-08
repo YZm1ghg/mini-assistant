@@ -199,6 +199,10 @@ OK_HOSTS = (
     "bell-sw.com", "oracle.com",
     # gradlew.bat 里的许可证链接（Gradle 用 Apache 2.0）
     "apache.org", "opensource.org", "gnu.org",
+    # README 里的徽章图片（shields.io 是标准做法）
+    "shields.io", "badgen.net",
+    # README 里链接到的官方文档
+    "pypi.org", "docs.python.org", "support.microsoft.com",
 )
 
 TEXT_EXT = {".py", ".md", ".txt", ".html", ".htm", ".js", ".css",
