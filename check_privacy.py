@@ -201,6 +201,11 @@ OK_HOSTS = (
     "apache.org", "opensource.org", "gnu.org",
     # README 里的徽章图片（shields.io 是标准做法）
     "shields.io", "badgen.net",
+    # README/教程里推荐的第三方工具官网
+    # ⚠ 这些是「工具官网」，不是「我的服务器」——
+    #   判断标准：域名是公开项目的官方站点，任何人都能访问
+    "nssm.cc", "git-scm.com", "nodejs.cn", "python.jp",
+    "modelscope.cn", "pypi.tuna.tsinghua.edu.cn",
     # README 里链接到的官方文档
     "pypi.org", "docs.python.org", "support.microsoft.com",
 )
